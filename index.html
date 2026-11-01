@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão Doméstica Pro - Casal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js para o Dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .grid-scroll::-webkit-scrollbar { height: 8px; }
+        .grid-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .grid-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .sticky-col { position: sticky; left: 0; z-index: 20; background-color: #ffffff; }
+        .cell-ok-ele { background-color: #3b82f6; color: white; }
+        .cell-ok-ela { background-color: #ec4899; color: white; }
+        .cell-ok-ambos { background-color: #10b981; color: white; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header Principal e Menu de Abas -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between py-3 gap-3 border-b border-slate-800">
+                <!-- Branding -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-500 to-emerald-400 flex items-center justify-center text-slate-900 font-extrabold text-xl shadow-md">
+                        <i class="fa-solid fa-house-chimney-crack"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                            Gestão Doméstica <span class="text-xs font-semibold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">PRO</span>
+                        </h1>
+                        <p class="text-xs text-slate-400">Painel Executivo do Casal</p>
+                    </div>
+                </div>
+
+                <!-- Seletor Globais de Mês/Ano & Atribuição de Responsável -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Seletor de Quem está preenchendo no momento -->
+                    <div class="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700 text-xs">
+                        <span class="text-slate-400 px-2 font-medium hidden sm:inline">Quem fez:</span>
+                        <button id="btnAssignEle" onclick="setAssignee('ele')" class="px-2.5 py-1 rounded-lg font-semibold transition-all flex items-center gap-1 bg-blue-600 text-white shadow">
+                            <i class="fa-solid fa-mars"></i> Ele
+                        </button>
+                        <button id="btnAssignEla" onclick="setAssignee('ela')" class="px-2.5 py-1 rounded-lg font-semibold transition-all flex items-center gap-1 text-slate-400 hover:text-white">
+                            <i class="fa-solid fa-venus"></i> Ela
+                        </button>
+                        <button id="btnAssignAmbos" onclick="setAssignee('ambos')" class="px-2.5 py-1 rounded-lg font-semibold transition-all flex items-center gap-1 text-slate-400 hover:text-white">
+                            <i class="fa-solid fa-people-holding"></i> Ambos
+                        </button>
+                    </div>
+
+                    <!-- Navegador de Período -->
+                    <div class="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700 text-xs">
+                        <button id="btnPrevMonth" class="px-2 py-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg"><i class="fa-solid fa-chevron-left"></i></button>
+                        <select id="selectMonth" class="bg-transparent text-white border-none text-xs font-semibold focus:ring-0 cursor-pointer px-1">
+                            <option value="0" class="text-slate-900">Janeiro</option>
+                            <option value="1" class="text-slate-900">Fevereiro</option>
+                            <option value="2" class="text-slate-900">Março</option>
+                            <option value="3" class="text-slate-900">Abril</option>
+                            <option value="4" class="text-slate-900">Maio</option>
+                            <option value="5" class="text-slate-900">Junho</option>
+                            <option value="6" class="text-slate-900">Julho</option>
+                            <option value="7" class="text-slate-900">Agosto</option>
+                            <option value="8" class="text-slate-900">Setembro</option>
+                            <option value="9" class="text-slate-900">Outubro</option>
+                            <option value="10" class="text-slate-900">Novembro</option>
+                            <option value="11" class="text-slate-900">Dezembro</option>
+                        </select>
+                        <select id="selectYear" class="bg-transparent text-white border-none text-xs font-semibold focus:ring-0 cursor-pointer px-1">
+                            <!-- JS populado -->
+                        </select>
+                        <button id="btnNextMonth" class="px-2 py-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navegação de Abas -->
+            <div class="flex space-x-4 pt-2">
+                <button id="tabBtnChecklist" onclick="switchTab('checklist')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-blue-500 text-blue-400 flex items-center gap-2 transition-all">
+                    <i class="fa-solid fa-list-check text-sm"></i> Matriz de Atividades
+                </button>
+                <button id="tabBtnDashboard" onclick="switchTab('dashboard')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition-all">
+                    <i class="fa-solid fa-chart-line text-sm"></i> Dashboard & Performance
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-6">
+
+        <!-- ABA 1: MATRIZ DE TAREFAS / CHECKLIST -->
+        <section id="tabChecklist" class="space-y-4">
+            
+            <!-- Barra Superior de Ferramentas da Matriz -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center space-x-3 text-xs">
+                    <span class="font-semibold text-slate-600">Legenda de Preenchimento:</span>
+                    <span class="px-2 py-1 rounded text-white bg-blue-500 font-bold"><i class="fa-solid fa-mars"></i> Ele</span>
+                    <span class="px-2 py-1 rounded text-white bg-pink-500 font-bold"><i class="fa-solid fa-venus"></i> Ela</span>
+                    <span class="px-2 py-1 rounded text-white bg-emerald-500 font-bold"><i class="fa-solid fa-people-holding"></i> Ambos</span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openModalAddTask()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs px-3.5 py-2 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-plus"></i> Nova Atividade
+                    </button>
+                    <button onclick="resetCurrentMonth()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium text-xs px-3 py-2 rounded-lg transition-colors flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-rotate-left"></i> Limpar Mês
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabela Estilo Matriz de Planilha -->
+            <div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto grid-scroll">
+                    <table id="taskGrid" class="w-full text-left border-collapse min-w-[950px]">
+                        <!-- Gerado via JavaScript -->
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ABA 2: DASHBOARD & PERFORMANCE -->
+        <section id="tabDashboard" class="space-y-6 hidden">
+            
+            <!-- KPIs Principais no Topo -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- KPI 1: Taxa de Conclusão -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Conclusão Geral</span>
+                        <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-bullseye text-base"></i>
+                        </div>
+                    </div>
+                    <h3 id="kpiCompletionRate" class="text-3xl font-extrabold text-slate-800 mt-2">0%</h3>
+                    <div id="kpiEvolutionBadge" class="mt-2 text-xs flex items-center gap-1 font-semibold text-slate-500">
+                        <i class="fa-solid fa-minus"></i> 0% em relação ao mês anterior
+                    </div>
+                </div>
+
+                <!-- KPI 2: Total de Execuções -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tarefas Concluídas</span>
+                        <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-circle-check text-base"></i>
+                        </div>
+                    </div>
+                    <h3 id="kpiTotalDone" class="text-3xl font-extrabold text-slate-800 mt-2">0</h3>
+                    <p id="kpiTotalTarget" class="mt-2 text-xs text-slate-500 font-medium">Meta mensal de execuções</p>
+                </div>
+
+                <!-- KPI 3: Divisão do Casal -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Engajamento do Casal</span>
+                        <div class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-heart text-base"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 flex items-center justify-between text-xs font-bold">
+                        <span class="text-blue-600 flex items-center gap-1"><i class="fa-solid fa-mars"></i> Ele: <span id="kpiElePercent">0%</span></span>
+                        <span class="text-pink-600 flex items-center gap-1"><i class="fa-solid fa-venus"></i> Ela: <span id="kpiElaPercent">0%</span></span>
+                    </div>
+                    <div class="w-full bg-slate-100 h-2.5 rounded-full mt-3 overflow-hidden flex">
+                        <div id="barEle" class="bg-blue-500 h-full transition-all" style="width: 50%"></div>
+                        <div id="barEla" class="bg-pink-500 h-full transition-all" style="width: 50%"></div>
+                    </div>
+                </div>
+
+                <!-- KPI 4: Diagnóstico da Categoria -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Desempenho por Categoria</span>
+                        <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-trophy text-base"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xs space-y-1">
+                        <p class="truncate"><span class="font-semibold text-slate-500">Mais cumprida:</span> <span id="kpiBestCategory" class="font-bold text-emerald-600">-</span></p>
+                        <p class="truncate"><span class="font-semibold text-slate-500">Mais crítica:</span> <span id="kpiWorstCategory" class="font-bold text-rose-600">-</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos Principais -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Gráfico de Comparação Diária / Produtividade por Dia da Semana -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 lg:col-span-2">
+                    <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-blue-600"></i> Produtividade por Dia da Semana
+                    </h4>
+                    <div class="h-64">
+                        <canvas id="chartWeekday"></canvas>
+                    </div>
+                </div>
+
+                <!-- Distribuição por Categoria -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-pie-chart text-indigo-600"></i> Cumprimento por Categoria
+                    </h4>
+                    <div class="h-64 flex items-center justify-center">
+                        <canvas id="chartCategory"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Relatório de Consistência e Tarefas Negligenciadas -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Tarefas 100% Cumpridas / Destaques -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-2 text-emerald-700">
+                        <i class="fa-solid fa-circle-check"></i> Tarefas Mais Frequentes no Mês
+                    </h4>
+                    <div id="listTopTasks" class="space-y-2 text-xs">
+                        <!-- JS populado -->
+                    </div>
+                </div>
+
+                <!-- Tarefas em Atraso / Pouco Executadas -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-2 text-rose-700">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Tarefas Requerendo Atenção
+                    </h4>
+                    <div id="listLowTasks" class="space-y-2 text-xs">
+                        <!-- JS populado -->
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Modal Nova Tarefa -->
+    <div id="modalAddTask" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-100">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-square-plus text-blue-600"></i> Nova Tarefa Doméstica
+                </h3>
+                <button onclick="closeModalAddTask()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="formAddTask" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Nome da Atividade</label>
+                    <input type="text" id="inputTaskName" required placeholder="Ex: Higienizar filtro de água" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Categoria</label>
+                    <select id="selectTaskCategory" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="daily">ATIVIDADE DIÁRIA</option>
+                        <option value="weekly">ATIVIDADE SEMANAL</option>
+                        <option value="monthly">ATIVIDADE MENSAL</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModalAddTask()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm">Salvar Atividade</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script de Funcionalidades -->
+    <script>
+        // Estrutura de Tarefas Padrão da Planilha Original
+        const DEFAULT_CATEGORIES = [
+            {
+                id: 'daily',
+                title: 'ATIVIDADE DIÁRIA',
+                headerBg: 'bg-blue-800 text-white',
+                tasks: ['Lavar a louça', 'Varrer a casa']
+            },
+            {
+                id: 'weekly',
+                title: 'ATIVIDADE SEMANAL',
+                headerBg: 'bg-blue-700 text-white',
+                tasks: [
+                    'Lavar roupa',
+                    'Lavar a casa',
+                    'Limpeza do muro - Trás',
+                    'Retirar Lixo',
+                    'Limpar Balcão e Mesa'
+                ]
+            },
+            {
+                id: 'monthly',
+                title: 'ATIVIDADE MENSAL',
+                headerBg: 'bg-blue-800 text-white',
+                tasks: [
+                    'Capinar o mato - Entrada',
+                    'Capinar o mato - Frente',
+                    'Capinar o mato - Trás',
+                    'Lavar o banheiro',
+                    'Limpar cooktop',
+                    'Limpar grade do ar condicionado',
+                    'Limpar ventiladores',
+                    'Lavar janela',
+                    'Limpar geladeira',
+                    'Lavar a casa',
+                    'Limpar sofá',
+                    'Limpar o Microondas',
+                    'Organizar Despensa',
+                    'Lavar a frente'
+                ]
+            }
+        ];
+
+        const WEEK_DAYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+
+        // Estado da Aplicação
+        let currentDate = new Date();
+        let selectedYear = currentDate.getFullYear();
+        let selectedMonth = currentDate.getMonth();
+        let activeAssignee = 'ele'; // 'ele', 'ela', 'ambos'
+
+        let appState = {
+            categories: JSON.parse(localStorage.getItem('house_pro_categories')) || DEFAULT_CATEGORIES,
+            records: JSON.parse(localStorage.getItem('house_pro_records')) || {}
+            // Formato de records: { "YYYY-MM": { "TaskName": { "day": "ele" | "ela" | "ambos" } } }
+        };
+
+        // Instâncias do Chart.js
+        let chartWeekdayInstance = null;
+        let chartCategoryInstance = null;
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            populateYearOptions();
+            syncSelectors();
+            renderGrid();
+            setupEventListeners();
+        });
+
+        function populateYearOptions() {
+            const selectYear = document.getElementById('selectYear');
+            selectYear.innerHTML = '';
+            const currentY = new Date().getFullYear();
+            for (let y = currentY - 2; y <= currentY + 3; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                opt.className = 'text-slate-900';
+                selectYear.appendChild(opt);
+            }
+        }
+
+        function syncSelectors() {
+            document.getElementById('selectMonth').value = selectedMonth;
+            document.getElementById('selectYear').value = selectedYear;
+        }
+
+        function saveState() {
+            localStorage.setItem('house_pro_categories', JSON.stringify(appState.categories));
+            localStorage.setItem('house_pro_records', JSON.stringify(appState.records));
+        }
+
+        function getDaysInMonth(year, month) {
+            return new Date(year, month + 1, 0).getDate();
+        }
+
+        function getMonthKey(year = selectedYear, month = selectedMonth) {
+            const m = String(month + 1).padStart(2, '0');
+            return `${year}-${m}`;
+        }
+
+        // Configura quem é o responsável ativo selecionado
+        function setAssignee(who) {
+            activeAssignee = who;
+            document.getElementById('btnAssignEle').className = `px-2.5 py-1 rounded-lg font-semibold transition-all flex items-center gap-1 ${who === 'ele' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`;
+            document.getElementById('btnAssignEla').className = `px-2.5 py-1 rounded-lg font-semibold transition-all flex items-center gap-1 ${who === 'ela' ? 'bg-pink-600 text-white shadow' : 'text-slate-400 hover:text-white'}`;
+            document.getElementById('btnAssignAmbos').className = `px-2.5 py-1 rounded-lg font-semibold transition-all flex items-center gap-1 ${who === 'ambos' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'}`;
+        }
+
+        // Troca de Abas
+        function switchTab(tab) {
+            const btnCheck = document.getElementById('tabBtnChecklist');
+            const btnDash = document.getElementById('tabBtnDashboard');
+            const secCheck = document.getElementById('tabChecklist');
+            const secDash = document.getElementById('tabDashboard');
+
+            if (tab === 'checklist') {
+                btnCheck.className = "px-4 py-2.5 text-xs font-bold border-b-2 border-blue-500 text-blue-400 flex items-center gap-2 transition-all";
+                btnDash.className = "px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition-all";
+                secCheck.classList.remove('hidden');
+                secDash.classList.add('hidden');
+                renderGrid();
+            } else {
+                btnDash.className = "px-4 py-2.5 text-xs font-bold border-b-2 border-blue-500 text-blue-400 flex items-center gap-2 transition-all";
+                btnCheck.className = "px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition-all";
+                secDash.classList.remove('hidden');
+                secCheck.classList.add('hidden');
+                renderDashboard();
+            }
+        }
+
+        // Renderiza a Matriz de Atividades
+        function renderGrid() {
+            const taskGrid = document.getElementById('taskGrid');
+            const totalDays = getDaysInMonth(selectedYear, selectedMonth);
+            const today = new Date();
+            const isCurrentMonthReal = (today.getFullYear() === selectedYear && today.getMonth() === selectedMonth);
+            const currentDayReal = today.getDate();
+            const monthKey = getMonthKey();
+
+            if (!appState.records[monthKey]) {
+                appState.records[monthKey] = {};
+            }
+            const currentMonthData = appState.records[monthKey];
+
+            taskGrid.innerHTML = '';
+
+            // Header Tabela
+            const thead = document.createElement('thead');
+            
+            // Linha 1: Números dos Dias
+            const rowDays = document.createElement('tr');
+            rowDays.className = 'bg-slate-900 text-white text-xs font-bold border-b border-slate-700';
+
+            const thTaskCol = document.createElement('th');
+            thTaskCol.className = 'p-3 w-64 md:w-80 sticky-col bg-slate-900 text-white border-r border-slate-700 font-extrabold uppercase tracking-wider';
+            thTaskCol.rowSpan = 2;
+            thTaskCol.textContent = 'ATIVIDADE';
+            rowDays.appendChild(thTaskCol);
+
+            for (let day = 1; day <= totalDays; day++) {
+                const th = document.createElement('th');
+                const isToday = isCurrentMonthReal && day === currentDayReal;
+                th.className = `p-1 text-center min-w-[32px] border-r border-slate-800 ${isToday ? 'bg-amber-400 text-slate-900 font-extrabold' : ''}`;
+                th.textContent = day;
+                rowDays.appendChild(th);
+            }
+            thead.appendChild(rowDays);
+
+            // Linha 2: Dias da Semana (dom, seg...)
+            const rowWeek = document.createElement('tr');
+            rowWeek.className = 'bg-slate-800 text-slate-300 text-[10px] font-semibold border-b border-slate-700';
+
+            for (let day = 1; day <= totalDays; day++) {
+                const date = new Date(selectedYear, selectedMonth, day);
+                const wDay = WEEK_DAYS[date.getDay()];
+                const th = document.createElement('th');
+                const isToday = isCurrentMonthReal && day === currentDayReal;
+                th.className = `py-1 text-center border-r border-slate-700 ${isToday ? 'bg-amber-300 text-slate-900 font-bold' : ''}`;
+                th.textContent = wDay;
+                rowWeek.appendChild(th);
+            }
+            thead.appendChild(rowWeek);
+            taskGrid.appendChild(thead);
+
+            // Corpo da Tabela
+            const tbody = document.createElement('tbody');
+            tbody.className = 'text-xs divide-y divide-slate-200';
+
+            appState.categories.forEach(cat => {
+                // Título da Categoria
+                const trCat = document.createElement('tr');
+                trCat.className = `${cat.headerBg} font-bold text-xs uppercase tracking-wider`;
+                const tdCat = document.createElement('td');
+                tdCat.colSpan = totalDays + 1;
+                tdCat.className = 'px-3 py-2 border-y border-slate-300';
+                tdCat.textContent = cat.title;
+                trCat.appendChild(tdCat);
+                tbody.appendChild(trCat);
+
+                // Linhas de Tarefa
+                cat.tasks.forEach(taskName => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-100';
+
+                    // Nome da Atividade + Opções
+                    const tdName = document.createElement('td');
+                    tdName.className = 'p-2.5 font-medium text-slate-800 sticky-col border-r border-slate-200 bg-white flex items-center justify-between group';
+                    
+                    tdName.innerHTML = `
+                        <span class="truncate" title="${taskName}">${taskName}</span>
+                        <button onclick="deleteTask('${cat.id}', '${taskName.replace(/'/g, "\\'")}')" class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity px-1" title="Excluir">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    `;
+                    tr.appendChild(tdName);
+
+                    // Células dos Dias
+                    for (let day = 1; day <= totalDays; day++) {
+                        const td = document.createElement('td');
+                        const isToday = isCurrentMonthReal && day === currentDayReal;
+                        const val = currentMonthData[taskName] ? currentMonthData[taskName][day] : null;
+
+                        td.className = `p-1 text-center cursor-pointer select-none border-r border-slate-100 ${isToday ? 'bg-blue-50/50' : ''}`;
+
+                        if (val === 'ele') {
+                            td.innerHTML = `<div class="w-full h-6 cell-ok-ele rounded flex items-center justify-center font-bold text-[10px] shadow-sm"><i class="fa-solid fa-mars"></i></div>`;
+                        } else if (val === 'ela') {
+                            td.innerHTML = `<div class="w-full h-6 cell-ok-ela rounded flex items-center justify-center font-bold text-[10px] shadow-sm"><i class="fa-solid fa-venus"></i></div>`;
+                        } else if (val === 'ambos') {
+                            td.innerHTML = `<div class="w-full h-6 cell-ok-ambos rounded flex items-center justify-center font-bold text-[10px] shadow-sm"><i class="fa-solid fa-check"></i></div>`;
+                        } else {
+                            td.innerHTML = `<div class="w-full h-6 hover:bg-slate-200/50 rounded flex items-center justify-center text-transparent hover:text-slate-400">•</div>`;
+                        }
+
+                        td.addEventListener('click', () => {
+                            toggleDayTask(taskName, day);
+                        });
+
+                        tr.appendChild(td);
+                    }
+
+                    tbody.appendChild(tr);
+                });
+            });
+
+            taskGrid.appendChild(tbody);
+        }
+
+        // Alterna valor da tarefa no dia
+        function toggleDayTask(taskName, day) {
+            const monthKey = getMonthKey();
+            if (!appState.records[monthKey]) appState.records[monthKey] = {};
+            if (!appState.records[monthKey][taskName]) appState.records[monthKey][taskName] = {};
+
+            const current = appState.records[monthKey][taskName][day];
+            if (current === activeAssignee) {
+                // Se clicou no mesmo ativo, desmarca
+                delete appState.records[monthKey][taskName][day];
+            } else {
+                // Seta para o ativo selecionado
+                appState.records[monthKey][taskName][day] = activeAssignee;
+            }
+
+            saveState();
+            renderGrid();
+        }
+
+        // Adicionar Tarefa
+        function addTask(catId, name) {
+            const cat = appState.categories.find(c => c.id === catId);
+            if (cat) {
+                if (!cat.tasks.includes(name)) {
+                    cat.tasks.push(name);
+                    saveState();
+                    renderGrid();
+                    closeModalAddTask();
+                } else {
+                    alert('Esta tarefa já existe!');
+                }
+            }
+        }
+
+        // Excluir Tarefa
+        function deleteTask(catId, name) {
+            if (confirm(`Remover "${name}"?`)) {
+                const cat = appState.categories.find(c => c.id === catId);
+                if (cat) {
+                    cat.tasks = cat.tasks.filter(t => t !== name);
+                    saveState();
+                    renderGrid();
+                }
+            }
+        }
+
+        // Limpar dados do mês
+        function resetCurrentMonth() {
+            if (confirm('Deseja limpar todos os lançamentos do mês atual?')) {
+                const monthKey = getMonthKey();
+                appState.records[monthKey] = {};
+                saveState();
+                renderGrid();
+            }
+        }
+
+        // --- DASHBOARD DE PERFORMANCE ---
+        function renderDashboard() {
+            const monthKey = getMonthKey();
+            const prevMonthDate = new Date(selectedYear, selectedMonth - 1, 1);
+            const prevMonthKey = getMonthKey(prevMonthDate.getFullYear(), prevMonthDate.getMonth());
+
+            const totalDays = getDaysInMonth(selectedYear, selectedMonth);
+            const currentData = appState.records[monthKey] || {};
+            const prevData = appState.records[prevMonthKey] || {};
+
+            let totalDone = 0;
+            let eleDone = 0;
+            let elaDone = 0;
+            let ambosDone = 0;
+
+            let totalTasksCount = 0;
+            const categoryStats = {};
+            const weekdayStats = [0, 0, 0, 0, 0, 0, 0]; // dom to sab
+            const taskPerformance = [];
+
+            appState.categories.forEach(cat => {
+                categoryStats[cat.id] = { title: cat.title, done: 0, possible: cat.tasks.length * totalDays };
+                totalTasksCount += cat.tasks.length;
+
+                cat.tasks.forEach(tName => {
+                    let taskDoneInMonth = 0;
+                    for (let day = 1; day <= totalDays; day++) {
+                        const val = currentData[tName] ? currentData[tName][day] : null;
+                        if (val) {
+                            totalDone++;
+                            taskDoneInMonth++;
+                            categoryStats[cat.id].done++;
+
+                            if (val === 'ele') eleDone++;
+                            else if (val === 'ela') elaDone++;
+                            else if (val === 'ambos') ambosDone++;
+
+                            const date = new Date(selectedYear, selectedMonth, day);
+                            weekdayStats[date.getDay()]++;
+                        }
+                    }
+
+                    taskPerformance.push({
+                        name: tName,
+                        category: cat.title,
+                        count: taskDoneInMonth
+                    });
+                });
+            });
+
+            const totalPossible = totalTasksCount * totalDays;
+            const completionRate = totalPossible > 0 ? Math.round((totalDone / totalPossible) * 100) : 0;
+
+            // Mês Anterior para Comparativo
+            let prevDone = 0;
+            let prevPossible = totalTasksCount * getDaysInMonth(prevMonthDate.getFullYear(), prevMonthDate.getMonth());
+            Object.keys(prevData).forEach(t => {
+                Object.keys(prevData[t]).forEach(() => prevDone++);
+            });
+            const prevRate = prevPossible > 0 ? Math.round((prevDone / prevPossible) * 100) : 0;
+            const diffRate = completionRate - prevRate;
+
+            // Render KPIs
+            document.getElementById('kpiCompletionRate').textContent = `${completionRate}%`;
+            document.getElementById('kpiTotalDone').textContent = totalDone;
+            document.getElementById('kpiTotalTarget').textContent = `Meta: ${totalPossible} execuções possíveis`;
+
+            const badgeElem = document.getElementById('kpiEvolutionBadge');
+            if (diffRate > 0) {
+                badgeElem.className = 'mt-2 text-xs flex items-center gap-1 font-bold text-emerald-600';
+                badgeElem.innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i> +${diffRate}% em relação ao mês anterior`;
+            } else if (diffRate < 0) {
+                badgeElem.className = 'mt-2 text-xs flex items-center gap-1 font-bold text-rose-600';
+                badgeElem.innerHTML = `<i class="fa-solid fa-arrow-trend-down"></i> ${diffRate}% em relação ao mês anterior`;
+            } else {
+                badgeElem.className = 'mt-2 text-xs flex items-center gap-1 font-bold text-slate-500';
+                badgeElem.innerHTML = `<i class="fa-solid fa-minus"></i> Mantido comparado ao mês anterior`;
+            }
+
+            // Engajamento Casal
+            const totalCouple = eleDone + elaDone + ambosDone;
+            const eleP = totalCouple > 0 ? Math.round(((eleDone + (ambosDone*0.5)) / totalCouple) * 100) : 50;
+            const elaP = totalCouple > 0 ? Math.round(((elaDone + (ambosDone*0.5)) / totalCouple) * 100) : 50;
+
+            document.getElementById('kpiElePercent').textContent = `${eleP}%`;
+            document.getElementById('kpiElaPercent').textContent = `${elaP}%`;
+            document.getElementById('barEle').style.width = `${eleP}%`;
+            document.getElementById('barEla').style.width = `${elaP}%`;
+
+            // Categorias extrema
+            let bestCat = '-';
+            let worstCat = '-';
+            let maxR = -1;
+            let minR = 999;
+
+            Object.keys(categoryStats).forEach(cid => {
+                const c = categoryStats[cid];
+                const r = c.possible > 0 ? (c.done / c.possible) : 0;
+                if (r > maxR) { maxR = r; bestCat = c.title; }
+                if (r < minR) { minR = r; worstCat = c.title; }
+            });
+            document.getElementById('kpiBestCategory').textContent = bestCat;
+            document.getElementById('kpiWorstCategory').textContent = worstCat;
+
+            // Listas de Destaques
+            taskPerformance.sort((a, b) => b.count - a.count);
+            const topTasks = taskPerformance.slice(0, 4);
+            const lowTasks = [...taskPerformance].reverse().slice(0, 4);
+
+            const listTop = document.getElementById('listTopTasks');
+            listTop.innerHTML = topTasks.map(t => `
+                <div class="flex items-center justify-between p-2 rounded bg-emerald-50 border border-emerald-100">
+                    <span class="font-medium text-slate-800">${t.name} <span class="text-[10px] text-slate-400">(${t.category})</span></span>
+                    <span class="font-bold text-emerald-700 bg-emerald-200/60 px-2 py-0.5 rounded">${t.count}x</span>
+                </div>
+            `).join('');
+
+            const listLow = document.getElementById('listLowTasks');
+            listLow.innerHTML = lowTasks.map(t => `
+                <div class="flex items-center justify-between p-2 rounded bg-rose-50 border border-rose-100">
+                    <span class="font-medium text-slate-800">${t.name} <span class="text-[10px] text-slate-400">(${t.category})</span></span>
+                    <span class="font-bold text-rose-700 bg-rose-200/60 px-2 py-0.5 rounded">${t.count}x</span>
+                </div>
+            `).join('');
+
+            // Renderizar Gráficos Chart.js
+            renderCharts(weekdayStats, categoryStats);
+        }
+
+        function renderCharts(weekdayStats, categoryStats) {
+            // Chart Dias da Semana
+            const ctxW = document.getElementById('chartWeekday').getContext('2d');
+            if (chartWeekdayInstance) chartWeekdayInstance.destroy();
+            chartWeekdayInstance = new Chart(ctxW, {
+                type: 'bar',
+                data: {
+                    labels: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+                    datasets: [{
+                        label: 'Tarefas Concluídas',
+                        data: weekdayStats,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+
+            // Chart Categoria
+            const ctxC = document.getElementById('chartCategory').getContext('2d');
+            if (chartCategoryInstance) chartCategoryInstance.destroy();
+
+            const catLabels = Object.keys(categoryStats).map(k => categoryStats[k].title);
+            const catData = Object.keys(categoryStats).map(k => categoryStats[k].done);
+
+            chartCategoryInstance = new Chart(ctxC, {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels,
+                    datasets: [{
+                        data: catData,
+                        backgroundColor: ['#1d4ed8', '#2563eb', '#3b82f6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+                }
+            });
+        }
+
+        // Modal Helpers
+        function openModalAddTask() { document.getElementById('modalAddTask').classList.remove('hidden'); }
+        function closeModalAddTask() { document.getElementById('modalAddTask').classList.add('hidden'); document.getElementById('formAddTask').reset(); }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            document.getElementById('selectMonth').addEventListener('change', (e) => {
+                selectedMonth = parseInt(e.target.value);
+                renderGrid();
+                if (!document.getElementById('tabDashboard').classList.contains('hidden')) renderDashboard();
+            });
+
+            document.getElementById('selectYear').addEventListener('change', (e) => {
+                selectedYear = parseInt(e.target.value);
+                renderGrid();
+                if (!document.getElementById('tabDashboard').classList.contains('hidden')) renderDashboard();
+            });
+
+            document.getElementById('btnPrevMonth').addEventListener('click', () => {
+                if (selectedMonth === 0) { selectedMonth = 11; selectedYear--; }
+                else { selectedMonth--; }
+                syncSelectors();
+                renderGrid();
+                if (!document.getElementById('tabDashboard').classList.contains('hidden')) renderDashboard();
+            });
+
+            document.getElementById('btnNextMonth').addEventListener('click', () => {
+                if (selectedMonth === 11) { selectedMonth = 0; selectedYear++; }
+                else { selectedMonth++; }
+                syncSelectors();
+                renderGrid();
+                if (!document.getElementById('tabDashboard').classList.contains('hidden')) renderDashboard();
+            });
+
+            document.getElementById('formAddTask').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('inputTaskName').value.trim();
+                const cat = document.getElementById('selectTaskCategory').value;
+                if (name) addTask(cat, name);
+            });
+        }
+    </script>
+</body>
+</html>
